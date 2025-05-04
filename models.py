@@ -1,41 +1,44 @@
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, JSON
+from typing import Optional, Dict
 
-db = SQLAlchemy()
+class MarketBias:
+    def __init__(
+        self,
+        symbol: str,
+        bias: str,
+        direction: str,
+        strength: str,
+        score: float,
+        prev_price: float,
+        current_price: float,
+        change_percentage: float,
+        daily_score: float,
+        weekly_score: Optional[float] = None,
+        daily_recommendation: Optional[str] = None,
+        weekly_recommendation: Optional[str] = None,
+        indicators: Optional[Dict] = None,
+        timestamp: Optional[datetime] = None
+    ):
+        self.id = None  # You can manage this manually if needed
+        self.symbol = symbol
+        self.timestamp = timestamp or datetime.utcnow()
+        self.bias = bias
+        self.direction = direction
+        self.strength = strength
+        self.score = score
+        self.prev_price = prev_price
+        self.current_price = current_price
+        self.change_percentage = change_percentage
+        self.daily_score = daily_score
+        self.weekly_score = weekly_score
+        self.daily_recommendation = daily_recommendation
+        self.weekly_recommendation = weekly_recommendation
+        self.indicators = indicators or {}
 
-class MarketBias(db.Model):
-    __tablename__ = 'market_bias'
-    
-    id = Column(Integer, primary_key=True)
-    symbol = Column(String(20), nullable=False, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    
-    # Bias data
-    bias = Column(String(50), nullable=False)  # e.g., 'Bullish', 'Bearish', 'Sideways'
-    direction = Column(String(20), nullable=False)  # 'up', 'down', 'neutral'
-    strength = Column(String(20), nullable=False)  # 'strong', 'moderate', 'weak', 'conflicted'
-    score = Column(Float, nullable=False)  # Bias score
-    
-    # Price data
-    prev_price = Column(Float, nullable=False)
-    current_price = Column(Float, nullable=False)
-    change_percentage = Column(Float, nullable=False)
-    
-    # Timeframe data
-    daily_score = Column(Float, nullable=False)
-    weekly_score = Column(Float, nullable=True)  # Nullable as weekly data may not always be available
-    daily_recommendation = Column(String(50), nullable=True)
-    weekly_recommendation = Column(String(50), nullable=True)
-    
-    # Technical indicators
-    indicators = Column(JSON, nullable=True)  # Store all indicators as JSON
-    
     def __repr__(self):
-        return f"<MarketBias {self.symbol} {self.timestamp} {self.bias}>"
-    
+        return f"<MarketBias {self.symbol} {self.timestamp.isoformat()} {self.bias}>"
+
     def to_dict(self):
-        """Convert object to dictionary"""
         return {
             'id': self.id,
             'symbol': self.symbol,
