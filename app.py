@@ -22,6 +22,7 @@ def get_market_bias():
     try:
         # Get currency pair from form
         currency_pair = request.form.get('currency_pair', 'EURUSD=X')
+        logging.info(f"Requested currency pair: {currency_pair}")
         
         # Make sure the currency pair has the correct format for yfinance
         if not currency_pair.endswith('=X') and not currency_pair.startswith('^'):
@@ -37,35 +38,44 @@ def get_market_bias():
             elif currency_pair.upper() in ['DJI', 'DOW', 'DOWJONES']:
                 currency_pair = '^DJI'  # Dow Jones Industrial Average
         
+        logging.info(f"Formatted currency pair for yfinance: {currency_pair}")
+        
         # Fetch data
         data = yf.download(currency_pair, period="5d", interval="1d")
         
         # Check if data was fetched successfully
-        if data.empty or len(data.index) < 2:
+        logging.info(f"Data shape: {data.shape}, Data columns: {data.columns}")
+        if data.shape[0] < 2:  # Make sure we have at least 2 rows for comparison
             return jsonify({
                 'status': 'error',
                 'message': 'Not enough data available for this symbol.'
             })
         
         # Get previous and current close prices
-        prev_close = data['Close'].iloc[-2]
-        current_close = data['Close'].iloc[-1]
+        prev_close = float(data['Close'].iloc[-2])
+        current_close = float(data['Close'].iloc[-1])
+        
+        logging.info(f"Previous close: {prev_close}, Current close: {current_close}")
         
         # Determine market bias
         change_percentage = ((current_close - prev_close) / prev_close) * 100
         
-        if current_close > prev_close:
+        # Use explicit numerical comparison to avoid Series truth value issues
+        if (current_close - prev_close) > 0.0001:  # Small threshold for floating point comparison
             bias = "Bullish"
             direction = "up"
             icon = "📈"
-        elif current_close < prev_close:
+            logging.info("Determined bias: Bullish")
+        elif (prev_close - current_close) > 0.0001:  # Small threshold for floating point comparison
             bias = "Bearish"
             direction = "down"
             icon = "📉"
+            logging.info("Determined bias: Bearish")
         else:
             bias = "Sideways"
             direction = "neutral"
             icon = "🔁"
+            logging.info("Determined bias: Sideways")
         
         # Format the response data
         response = {
