@@ -1,0 +1,60 @@
+/* Custom styles beyond Bootstrap */
+
+/* Gradient backgrounds */
+.bg-gradient {
+    background-image: linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+}
+
+/* Make buttons look better on hover */
+.pair-btn:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+/* Custom styles for the bias indicator */
+#biasIcon {
+    font-size: 4rem;
+    line-height: 1;
+}
+
+/* Card hover effect */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Make result container more visually appealing */
+#resultContainer .card-header {
+    font-weight: bold;
+    color: white;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+    #biasIcon {
+        font-size: 3rem;
+    }
+    
+    .display-1 {
+        font-size: 3.5rem;
+    }
+    
+    h2 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Animation for bias icon */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+#biasIcon {
+    animation: pulse 2s infinite;
+}

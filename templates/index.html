@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Market Bias Analyzer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary bg-gradient">
+                <h2 class="card-title text-center mb-0">Market Bias Analyzer</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead text-center">Get the daily market bias for your chosen currency pair or asset</p>
+                
+                <form id="biasForm" class="mb-4">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="currencyPairInput" 
+                                       placeholder="Enter symbol (e.g., EURUSD)" list="pairsList" required>
+                                <datalist id="pairsList">
+                                    <!-- Will be populated via JavaScript -->
+                                </datalist>
+                            </div>
+                            <div class="form-text">Type or select a currency pair, index, or commodity</div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-chart-line me-2"></i>Analyze
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div id="loadingIndicator" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Fetching market data...</p>
+                </div>
+                
+                <div id="resultContainer" class="d-none">
+                    <div class="card">
+                        <div class="card-header" id="resultHeader">
+                            <h3 class="mb-0" id="symbolTitle">EURUSD</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 text-center mb-3 mb-md-0">
+                                    <h4 class="mb-3" id="biasHeading">Daily Bias</h4>
+                                    <div class="display-1 mb-3" id="biasIcon">📈</div>
+                                    <h2 class="mb-0" id="biasText">Bullish</h2>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Price Movement</h5>
+                                            <table class="table table-sm">
+                                                <tbody>
+                                                    <tr>
+                                                        <th>Previous Close:</th>
+                                                        <td id="prevClose">1.0000</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Current Close:</th>
+                                                        <td id="currentClose">1.0000</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Change:</th>
+                                                        <td id="priceChange">
+                                                            <span class="badge bg-success">
+                                                                <i class="fas fa-arrow-up me-1"></i>0.00%
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="errorContainer" class="alert alert-danger d-none mt-3" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary bg-gradient">
+                <h3 class="card-title mb-0">Popular Currency Pairs</h3>
+            </div>
+            <div class="card-body">
+                <div class="row" id="popularPairs">
+                    <!-- Will be populated via JavaScript -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading popular pairs...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}
