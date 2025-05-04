@@ -41,7 +41,7 @@ def get_market_bias():
         data = yf.download(currency_pair, period="5d", interval="1d")
         
         # Check if data was fetched successfully
-        if data.empty or len(data) < 2:
+        if data.empty or len(data.index) < 2:
             return jsonify({
                 'status': 'error',
                 'message': 'Not enough data available for this symbol.'
