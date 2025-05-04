@@ -34,18 +34,10 @@ def get_market_bias():
             symbol = "XAUUSD"
             screener = "cfd"
             exchange = "FOREXCOM"
-        elif currency_pair.upper() in ['XAGUSD', 'SILVER']:
-            symbol = "XAGUSD"
-            screener = "cfd"
-            exchange = "FOREXCOM"
-        elif currency_pair.upper() in ['SPX', 'S&P500', 'SP500']:
-            symbol = "SPX500"
-            screener = "cfd"
-            exchange = "FOREXCOM"
-        elif currency_pair.upper() in ['DJI', 'DOW', 'DOWJONES']:
-            symbol = "US30"
-            screener = "cfd"
-            exchange = "FOREXCOM"
+        elif currency_pair.upper() in ['BTCUSD', 'BTC', 'BITCOIN']:
+            symbol = "BTCUSD"
+            screener = "crypto"
+            exchange = "BINANCE"
         
         logging.info(f"TradingView parameters: Symbol={symbol}, Exchange={exchange}, Screener={screener}")
         
@@ -127,9 +119,7 @@ def get_supported_pairs():
         {'symbol': 'USDCHF', 'name': 'US Dollar / Swiss Franc'},
         {'symbol': 'NZDUSD', 'name': 'New Zealand Dollar / US Dollar'},
         {'symbol': 'XAUUSD', 'name': 'Gold / US Dollar'},
-        {'symbol': 'XAGUSD', 'name': 'Silver / US Dollar'},
-        {'symbol': 'SPX', 'name': 'S&P 500 Index'},
-        {'symbol': 'DJI', 'name': 'Dow Jones Industrial Average'}
+        {'symbol': 'BTCUSD', 'name': 'Bitcoin / US Dollar'}
     ]
     return jsonify(pairs)
 
