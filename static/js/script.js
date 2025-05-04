@@ -126,8 +126,8 @@ function updateResultUI(data) {
     document.getElementById('biasText').textContent = data.bias;
     
     // Update price information
-    document.getElementById('prevClose').textContent = data.prev_close;
-    document.getElementById('currentClose').textContent = data.current_close;
+    document.getElementById('prevClose').textContent = data.prev_price;
+    document.getElementById('currentClose').textContent = data.current_price;
     
     // Update price change with appropriate color and arrow
     const priceChangeElement = document.getElementById('priceChange');
