@@ -5,11 +5,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 try:
-    # Initialize the TA_Handler for a standard stock
+    # Initialize the TA_Handler for XAUUSD (Gold)
     handler = TA_Handler(
-        symbol="AAPL",
-        screener="america",
-        exchange="NASDAQ",
+        symbol="XAUUSD",
+        screener="cfd",
+        exchange="FOREXCOM",
         interval=Interval.INTERVAL_1_DAY
     )
     

@@ -1,8 +1,7 @@
 import os
 import logging
-import yfinance as yf
 from flask import Flask, render_template, request, jsonify
-import pandas as pd
+from tradingview_ta import TA_Handler, Interval
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
