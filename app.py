@@ -1,7 +1,9 @@
 import os
 import logging
-from flask import Flask, render_template, request, jsonify
+import datetime
+from flask import Flask, render_template, request, jsonify, url_for
 from tradingview_ta import TA_Handler, Interval
+from models import db, MarketBias
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -9,6 +11,15 @@ logging.basicConfig(level=logging.DEBUG)
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "your-secret-key")
+
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db.init_app(app)
+
+# Create database tables if they don't exist
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def index():
