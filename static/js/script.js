@@ -148,10 +148,61 @@ function updateResultUI(data) {
     
     strengthElement.innerHTML = `<span class="badge ${strengthBadgeClass}">${strengthText} (${data.score || 0})</span>`;
     
-    // Update TradingView recommendation
+    // Update TradingView recommendation and timeframe information
     const recommendationElement = document.getElementById('tradingviewRecommendation');
     if (recommendationElement) {
-        recommendationElement.innerHTML = `TradingView: <span>${data.tv_recommendation || 'N/A'}</span>`;
+        // For backward compatibility with old API
+        if (data.tv_recommendation) {
+            recommendationElement.innerHTML = `TradingView: <span>${data.tv_recommendation}</span>`;
+        } else if (data.timeframes && data.timeframes.daily && data.timeframes.daily.recommendation) {
+            recommendationElement.innerHTML = `TradingView: <span>${data.timeframes.daily.recommendation}</span>`;
+        } else {
+            recommendationElement.innerHTML = `TradingView: <span>N/A</span>`;
+        }
+    }
+    
+    // Update daily and weekly bias information
+    const dailyBiasElement = document.getElementById('dailyBias');
+    const weeklyBiasElement = document.getElementById('weeklyBias');
+    
+    if (dailyBiasElement && data.timeframes && data.timeframes.daily) {
+        const dailyScore = data.timeframes.daily.score;
+        let dailyBiasText = "Sideways";
+        
+        if (dailyScore >= 50) dailyBiasText = "Strong Bullish";
+        else if (dailyScore >= 20) dailyBiasText = "Bullish";
+        else if (dailyScore <= -50) dailyBiasText = "Strong Bearish";
+        else if (dailyScore <= -20) dailyBiasText = "Bearish";
+        
+        dailyBiasElement.textContent = `Daily: ${dailyBiasText} (${dailyScore})`;
+        
+        // Apply color based on score
+        dailyBiasElement.className = 'small';
+        if (dailyScore >= 40) dailyBiasElement.classList.add('text-success');
+        else if (dailyScore <= -40) dailyBiasElement.classList.add('text-danger');
+    }
+    
+    if (weeklyBiasElement && data.timeframes && data.timeframes.weekly) {
+        const weeklyScore = data.timeframes.weekly.score;
+        let weeklyBiasText = "Sideways";
+        
+        if (weeklyScore >= 50) weeklyBiasText = "Strong Bullish";
+        else if (weeklyScore >= 20) weeklyBiasText = "Bullish";
+        else if (weeklyScore <= -50) weeklyBiasText = "Strong Bearish";
+        else if (weeklyScore <= -20) weeklyBiasText = "Bearish";
+        
+        weeklyBiasElement.textContent = `Weekly: ${weeklyBiasText} (${weeklyScore})`;
+        weeklyBiasElement.className = 'small';
+        
+        // Apply color based on score
+        if (weeklyScore >= 40) weeklyBiasElement.classList.add('text-success');
+        else if (weeklyScore <= -40) weeklyBiasElement.classList.add('text-danger');
+        
+        // Show the weekly timeframe section
+        document.getElementById('timeframeSection').classList.remove('d-none');
+    } else if (weeklyBiasElement) {
+        // Hide weekly bias if not available
+        weeklyBiasElement.parentElement.classList.add('d-none');
     }
     
     // Update technical indicators for advanced users

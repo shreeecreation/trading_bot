@@ -41,81 +41,183 @@ def get_market_bias():
         
         logging.info(f"TradingView parameters: Symbol={symbol}, Exchange={exchange}, Screener={screener}")
         
-        # Fetch data from TradingView
-        handler = TA_Handler(
+        # Fetch data from TradingView for daily and weekly analysis
+        daily_handler = TA_Handler(
             symbol=symbol,
             screener=screener,
             exchange=exchange,
             interval=Interval.INTERVAL_1_DAY
         )
         
-        # Get the analysis
-        analysis = handler.get_analysis()
+        weekly_handler = TA_Handler(
+            symbol=symbol,
+            screener=screener,
+            exchange=exchange,
+            interval=Interval.INTERVAL_1_WEEK
+        )
         
-        # Check if data was fetched successfully
-        if not hasattr(analysis, 'indicators') or 'close' not in analysis.indicators:
+        # Get the daily and weekly analysis
+        try:
+            daily_analysis = daily_handler.get_analysis()
+            weekly_analysis = weekly_handler.get_analysis()
+            
+            # Check if data was fetched successfully
+            if not hasattr(daily_analysis, 'indicators') or 'close' not in daily_analysis.indicators:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Not enough daily data available for this symbol.'
+                })
+            
+            if not hasattr(weekly_analysis, 'indicators') or 'close' not in weekly_analysis.indicators:
+                logging.warning("Weekly data not available, proceeding with daily data only")
+                has_weekly_data = False
+            else:
+                has_weekly_data = True
+            
+            # Get current price information from daily timeframe
+            current_close = float(daily_analysis.indicators['close'])
+            prev_open = float(daily_analysis.indicators['open'])
+            
+            logging.info(f"Daily timeframe - Previous open: {prev_open}, Current close: {current_close}")
+            
+            # Get weekly price information if available
+            if has_weekly_data:
+                weekly_close = float(weekly_analysis.indicators['close'])
+                weekly_open = float(weekly_analysis.indicators['open'])
+                # Get last 5 weeks' closes if available
+                weekly_prev_close = weekly_analysis.indicators.get('prev_close', weekly_open)
+                
+                logging.info(f"Weekly timeframe - Weekly open: {weekly_open}, Weekly close: {weekly_close}")
+        
+        except Exception as e:
+            logging.error(f"Error fetching analysis data: {str(e)}")
             return jsonify({
                 'status': 'error',
-                'message': 'Not enough data available for this symbol.'
+                'message': f'Error analyzing market data: {str(e)}'
             })
         
-        # Get current price information
-        current_close = float(analysis.indicators['close'])
-        prev_open = float(analysis.indicators['open'])
-        
-        logging.info(f"Previous open: {prev_open}, Current close: {current_close}")
-        
         # Determine market bias using institutional trading techniques and TradingView indicators
-        change_percentage = ((current_close - prev_open) / prev_open) * 100
+        daily_change_percentage = ((current_close - prev_open) / prev_open) * 100
         
-        # Get additional indicators from TradingView analysis
-        rsi = analysis.indicators.get('RSI', 50)  # Relative Strength Index
-        macd = analysis.indicators.get('MACD.macd', 0)  # MACD Line
-        signal = analysis.indicators.get('MACD.signal', 0)  # MACD Signal Line
-        ema_20 = analysis.indicators.get('EMA20', current_close)  # 20-day EMA
-        ema_50 = analysis.indicators.get('EMA50', current_close)  # 50-day EMA
-        stoch_k = analysis.indicators.get('Stoch.K', 50)  # Stochastic %K
-        stoch_d = analysis.indicators.get('Stoch.D', 50)  # Stochastic %D
+        # Get additional indicators from TradingView daily analysis
+        rsi = daily_analysis.indicators.get('RSI', 50)  # Relative Strength Index
+        macd = daily_analysis.indicators.get('MACD.macd', 0)  # MACD Line
+        signal = daily_analysis.indicators.get('MACD.signal', 0)  # MACD Signal Line
+        ema_20 = daily_analysis.indicators.get('EMA20', current_close)  # 20-day EMA
+        ema_50 = daily_analysis.indicators.get('EMA50', current_close)  # 50-day EMA
+        stoch_k = daily_analysis.indicators.get('Stoch.K', 50)  # Stochastic %K
+        stoch_d = daily_analysis.indicators.get('Stoch.D', 50)  # Stochastic %D
+        
+        # Get weekly indicators if available
+        weekly_rsi = None
+        weekly_macd = None
+        weekly_signal = None
+        weekly_ema_20 = None
+        weekly_ema_50 = None
+        weekly_change_percentage = None
+        
+        if has_weekly_data:
+            weekly_change_percentage = ((weekly_close - weekly_open) / weekly_open) * 100
+            weekly_rsi = weekly_analysis.indicators.get('RSI', 50)
+            weekly_macd = weekly_analysis.indicators.get('MACD.macd', 0)
+            weekly_signal = weekly_analysis.indicators.get('MACD.signal', 0)
+            weekly_ema_20 = weekly_analysis.indicators.get('EMA20', weekly_close)
+            weekly_ema_50 = weekly_analysis.indicators.get('EMA50', weekly_close)
+            
+            logging.info(f"Weekly RSI: {weekly_rsi}, Weekly Change: {weekly_change_percentage}%")
         
         # Get TradingView's recommendation
-        tv_recommendation = analysis.summary.get('RECOMMENDATION', '')
-        logging.info(f"TradingView recommendation: {tv_recommendation}")
+        daily_recommendation = daily_analysis.summary.get('RECOMMENDATION', '')
+        weekly_recommendation = weekly_analysis.summary.get('RECOMMENDATION', '') if has_weekly_data else ''
+        
+        logging.info(f"Daily TradingView recommendation: {daily_recommendation}")
+        if has_weekly_data:
+            logging.info(f"Weekly TradingView recommendation: {weekly_recommendation}")
         
         # Calculate bias score (positive = bullish, negative = bearish)
-        bias_score = 0
+        daily_bias_score = 0
+        weekly_bias_score = 0
         
+        # Daily timeframe analysis (70% weight in final score)
         # Price action component (40% weight)
         price_action = current_close - prev_open
         if price_action > 0:
-            bias_score += 40
+            daily_bias_score += 40
         elif price_action < 0:
-            bias_score -= 40
+            daily_bias_score -= 40
             
         # Trend component (30% weight)
         if current_close > ema_20 and ema_20 > ema_50:
-            bias_score += 30  # Strong uptrend
+            daily_bias_score += 30  # Strong uptrend
         elif current_close < ema_20 and ema_20 < ema_50:
-            bias_score -= 30  # Strong downtrend
+            daily_bias_score -= 30  # Strong downtrend
         elif current_close > ema_20:
-            bias_score += 15  # Moderate uptrend
+            daily_bias_score += 15  # Moderate uptrend
         elif current_close < ema_20:
-            bias_score -= 15  # Moderate downtrend
+            daily_bias_score -= 15  # Moderate downtrend
             
         # Momentum component (20% weight)
         if rsi > 60:
-            bias_score += 20  # Strong bullish momentum
+            daily_bias_score += 20  # Strong bullish momentum
         elif rsi < 40:
-            bias_score -= 20  # Strong bearish momentum
+            daily_bias_score -= 20  # Strong bearish momentum
         elif rsi > 50:
-            bias_score += 10  # Moderate bullish momentum
+            daily_bias_score += 10  # Moderate bullish momentum
         elif rsi < 50:
-            bias_score -= 10  # Moderate bearish momentum
+            daily_bias_score -= 10  # Moderate bearish momentum
             
         # MACD component (10% weight)
         if macd > signal:
-            bias_score += 10  # Bullish MACD crossover
+            daily_bias_score += 10  # Bullish MACD crossover
         elif macd < signal:
-            bias_score -= 10  # Bearish MACD crossover
+            daily_bias_score -= 10  # Bearish MACD crossover
+            
+        logging.info(f"Daily bias score: {daily_bias_score}")
+        
+        # Weekly timeframe analysis (30% weight in final score) if available
+        if has_weekly_data:
+            # Weekly price action (40% weight)
+            if weekly_close > weekly_open:
+                weekly_bias_score += 40
+            elif weekly_close < weekly_open:
+                weekly_bias_score -= 40
+                
+            # Weekly trend component (30% weight)
+            if weekly_close > weekly_ema_20 and weekly_ema_20 > weekly_ema_50:
+                weekly_bias_score += 30  # Strong uptrend
+            elif weekly_close < weekly_ema_20 and weekly_ema_20 < weekly_ema_50:
+                weekly_bias_score -= 30  # Strong downtrend
+            elif weekly_close > weekly_ema_20:
+                weekly_bias_score += 15  # Moderate uptrend
+            elif weekly_close < weekly_ema_20:
+                weekly_bias_score -= 15  # Moderate downtrend
+                
+            # Weekly momentum component (20% weight)
+            if weekly_rsi > 60:
+                weekly_bias_score += 20  # Strong bullish momentum
+            elif weekly_rsi < 40:
+                weekly_bias_score -= 20  # Strong bearish momentum
+            elif weekly_rsi > 50:
+                weekly_bias_score += 10  # Moderate bullish momentum
+            elif weekly_rsi < 50:
+                weekly_bias_score -= 10  # Moderate bearish momentum
+                
+            # Weekly MACD component (10% weight)
+            if weekly_macd > weekly_signal:
+                weekly_bias_score += 10  # Bullish MACD crossover
+            elif weekly_macd < weekly_signal:
+                weekly_bias_score -= 10  # Bearish MACD crossover
+                
+            logging.info(f"Weekly bias score: {weekly_bias_score}")
+        
+        # Calculate final bias score: 70% daily + 30% weekly (if available)
+        bias_score = daily_bias_score * 0.7
+        if has_weekly_data:
+            bias_score += weekly_bias_score * 0.3
+            
+        logging.info(f"Final bias score (with weekly data): {bias_score}")
+        
+        # This conflict check was moved to the response formatting section
         
         # Determine final bias based on score
         if bias_score >= 50:
@@ -149,6 +251,14 @@ def get_market_bias():
             strength = "weak"
             logging.info(f"Determined bias: Sideways (score: {bias_score})")
         
+        # Handle the strength modifier for conflicting timeframes
+        strength_modifier = None
+        if has_weekly_data and ((daily_bias_score > 30 and weekly_bias_score < -30) or 
+                               (daily_bias_score < -30 and weekly_bias_score > 30)):
+            strength_modifier = "conflicted"  # Daily and weekly timeframes disagreeing
+            strength = "conflicted"
+            logging.info("Conflicting signals between daily and weekly timeframes")
+            
         # Format the response data
         response = {
             'status': 'success',
@@ -160,7 +270,14 @@ def get_market_bias():
             'score': bias_score,   # Added numerical score for transparency
             'prev_price': round(prev_open, 4),  # Using open price from TradingView
             'current_price': round(current_close, 4),
-            'change_percentage': round(change_percentage, 2),
+            'change_percentage': round(daily_change_percentage, 2),
+            'timeframes': {
+                'daily': {
+                    'score': daily_bias_score,
+                    'change_percentage': round(daily_change_percentage, 2),
+                    'recommendation': daily_recommendation
+                }
+            },
             'indicators': {  # Added technical indicators for advanced users
                 'rsi': round(rsi, 2) if isinstance(rsi, (int, float)) else rsi,
                 'ema20': round(ema_20, 4) if isinstance(ema_20, (int, float)) else ema_20,
@@ -169,9 +286,24 @@ def get_market_bias():
                 'macd_signal': round(signal, 4) if isinstance(signal, (int, float)) else signal,
                 'stoch_k': round(stoch_k, 2) if isinstance(stoch_k, (int, float)) else stoch_k,
                 'stoch_d': round(stoch_d, 2) if isinstance(stoch_d, (int, float)) else stoch_d
-            },
-            'tv_recommendation': tv_recommendation  # TradingView's own recommendation
+            }
         }
+        
+        # Add weekly data if available
+        if has_weekly_data:
+            # Safe rounding for values that might be None
+            safe_round = lambda x, digits: round(float(x), digits) if x is not None and isinstance(x, (int, float)) else None
+            
+            response['timeframes']['weekly'] = {
+                'score': weekly_bias_score,
+                'change_percentage': safe_round(weekly_change_percentage, 2),
+                'recommendation': weekly_recommendation,
+                'indicators': {
+                    'rsi': safe_round(weekly_rsi, 2),
+                    'macd': safe_round(weekly_macd, 4),
+                    'macd_signal': safe_round(weekly_signal, 4)
+                }
+            }
         
         return jsonify(response)
     
