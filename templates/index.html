@@ -51,6 +51,12 @@
                                     <h4 class="mb-3" id="biasHeading">Daily Bias</h4>
                                     <div class="display-1 mb-3" id="biasIcon">📈</div>
                                     <h2 class="mb-0" id="biasText">Bullish</h2>
+                                    <div class="mt-2 mb-3" id="biasStrength">
+                                        <span class="badge bg-primary p-2" style="font-size: 1rem;">Moderate Strength</span>
+                                    </div>
+                                    <div class="small text-muted mb-2" id="tradingviewRecommendation">
+                                        TradingView: <span>BUY</span>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="card h-100">
@@ -76,6 +82,38 @@
                                                     </tr>
                                                 </tbody>
                                             </table>
+                                            
+                                            <!-- Technical Indicators for Advanced Traders -->
+                                            <div class="mt-3">
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#technicalIndicators" aria-expanded="false">
+                                                    Show Technical Indicators
+                                                </button>
+                                                <div class="collapse mt-2" id="technicalIndicators">
+                                                    <div class="card card-body bg-dark">
+                                                        <h6 class="card-subtitle mb-2 text-muted">Technical Indicators</h6>
+                                                        <table class="table table-sm table-dark">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <th>RSI:</th>
+                                                                    <td id="rsiValue">50</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>MACD:</th>
+                                                                    <td id="macdValue">0</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>EMA 20:</th>
+                                                                    <td id="ema20Value">0</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>EMA 50:</th>
+                                                                    <td id="ema50Value">0</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

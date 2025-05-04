@@ -125,6 +125,79 @@ function updateResultUI(data) {
     document.getElementById('biasIcon').textContent = data.icon;
     document.getElementById('biasText').textContent = data.bias;
     
+    // Update bias strength indicator
+    const strengthElement = document.getElementById('biasStrength');
+    let strengthBadgeClass = 'bg-secondary';
+    let strengthText = 'Weak';
+    
+    if (data.strength === 'strong' && data.direction === 'up') {
+        strengthBadgeClass = 'bg-success';
+        strengthText = 'Strong Strength';
+    } else if (data.strength === 'strong' && data.direction === 'down') {
+        strengthBadgeClass = 'bg-danger';
+        strengthText = 'Strong Strength';
+    } else if (data.strength === 'moderate' && data.direction === 'up') {
+        strengthBadgeClass = 'bg-info';
+        strengthText = 'Moderate Strength';
+    } else if (data.strength === 'moderate' && data.direction === 'down') {
+        strengthBadgeClass = 'bg-warning';
+        strengthText = 'Moderate Strength';
+    } else {
+        strengthText = 'Weak Strength';
+    }
+    
+    strengthElement.innerHTML = `<span class="badge ${strengthBadgeClass}">${strengthText} (${data.score || 0})</span>`;
+    
+    // Update TradingView recommendation
+    const recommendationElement = document.getElementById('tradingviewRecommendation');
+    if (recommendationElement) {
+        recommendationElement.innerHTML = `TradingView: <span>${data.tv_recommendation || 'N/A'}</span>`;
+    }
+    
+    // Update technical indicators for advanced users
+    const rsiElement = document.getElementById('rsiValue');
+    const macdElement = document.getElementById('macdValue');
+    const ema20Element = document.getElementById('ema20Value');
+    const ema50Element = document.getElementById('ema50Value');
+    
+    if (rsiElement && data.indicators) {
+        rsiElement.textContent = data.indicators.rsi || 'N/A';
+        
+        // Color RSI based on common overbought/oversold levels
+        if (data.indicators.rsi > 70) {
+            rsiElement.classList.add('text-danger');
+        } else if (data.indicators.rsi < 30) {
+            rsiElement.classList.add('text-success');
+        } else {
+            rsiElement.classList.remove('text-danger', 'text-success');
+        }
+    }
+    
+    if (macdElement && data.indicators) {
+        const macdValue = data.indicators.macd || 0;
+        const signalValue = data.indicators.macd_signal || 0;
+        macdElement.textContent = `${macdValue} / ${signalValue}`;
+        
+        // Color MACD based on crossover (bullish or bearish)
+        if (macdValue > signalValue) {
+            macdElement.classList.add('text-success');
+            macdElement.classList.remove('text-danger');
+        } else if (macdValue < signalValue) {
+            macdElement.classList.add('text-danger');
+            macdElement.classList.remove('text-success');
+        } else {
+            macdElement.classList.remove('text-danger', 'text-success');
+        }
+    }
+    
+    if (ema20Element && data.indicators) {
+        ema20Element.textContent = data.indicators.ema20 || 'N/A';
+    }
+    
+    if (ema50Element && data.indicators) {
+        ema50Element.textContent = data.indicators.ema50 || 'N/A';
+    }
+    
     // Update price information
     document.getElementById('prevClose').textContent = data.prev_price;
     document.getElementById('currentClose').textContent = data.current_price;

@@ -65,26 +65,89 @@ def get_market_bias():
         
         logging.info(f"Previous open: {prev_open}, Current close: {current_close}")
         
-        # Determine market bias using TradingView data
-        # We compare current close with today's open
+        # Determine market bias using institutional trading techniques and TradingView indicators
         change_percentage = ((current_close - prev_open) / prev_open) * 100
         
-        # Use explicit numerical comparison to avoid any issues
-        if (current_close - prev_open) > 0.0001:  # Small threshold for floating point comparison
+        # Get additional indicators from TradingView analysis
+        rsi = analysis.indicators.get('RSI', 50)  # Relative Strength Index
+        macd = analysis.indicators.get('MACD.macd', 0)  # MACD Line
+        signal = analysis.indicators.get('MACD.signal', 0)  # MACD Signal Line
+        ema_20 = analysis.indicators.get('EMA20', current_close)  # 20-day EMA
+        ema_50 = analysis.indicators.get('EMA50', current_close)  # 50-day EMA
+        stoch_k = analysis.indicators.get('Stoch.K', 50)  # Stochastic %K
+        stoch_d = analysis.indicators.get('Stoch.D', 50)  # Stochastic %D
+        
+        # Get TradingView's recommendation
+        tv_recommendation = analysis.summary.get('RECOMMENDATION', '')
+        logging.info(f"TradingView recommendation: {tv_recommendation}")
+        
+        # Calculate bias score (positive = bullish, negative = bearish)
+        bias_score = 0
+        
+        # Price action component (40% weight)
+        price_action = current_close - prev_open
+        if price_action > 0:
+            bias_score += 40
+        elif price_action < 0:
+            bias_score -= 40
+            
+        # Trend component (30% weight)
+        if current_close > ema_20 and ema_20 > ema_50:
+            bias_score += 30  # Strong uptrend
+        elif current_close < ema_20 and ema_20 < ema_50:
+            bias_score -= 30  # Strong downtrend
+        elif current_close > ema_20:
+            bias_score += 15  # Moderate uptrend
+        elif current_close < ema_20:
+            bias_score -= 15  # Moderate downtrend
+            
+        # Momentum component (20% weight)
+        if rsi > 60:
+            bias_score += 20  # Strong bullish momentum
+        elif rsi < 40:
+            bias_score -= 20  # Strong bearish momentum
+        elif rsi > 50:
+            bias_score += 10  # Moderate bullish momentum
+        elif rsi < 50:
+            bias_score -= 10  # Moderate bearish momentum
+            
+        # MACD component (10% weight)
+        if macd > signal:
+            bias_score += 10  # Bullish MACD crossover
+        elif macd < signal:
+            bias_score -= 10  # Bearish MACD crossover
+        
+        # Determine final bias based on score
+        if bias_score >= 50:
+            bias = "Strong Bullish"
+            direction = "up"
+            icon = "📈"
+            strength = "strong"
+            logging.info(f"Determined bias: Strong Bullish (score: {bias_score})")
+        elif bias_score >= 20:
             bias = "Bullish"
             direction = "up"
             icon = "📈"
-            logging.info("Determined bias: Bullish")
-        elif (prev_open - current_close) > 0.0001:  # Small threshold for floating point comparison
+            strength = "moderate"
+            logging.info(f"Determined bias: Bullish (score: {bias_score})")
+        elif bias_score <= -50:
+            bias = "Strong Bearish"
+            direction = "down"
+            icon = "📉"
+            strength = "strong"
+            logging.info(f"Determined bias: Strong Bearish (score: {bias_score})")
+        elif bias_score <= -20:
             bias = "Bearish"
             direction = "down"
             icon = "📉"
-            logging.info("Determined bias: Bearish")
+            strength = "moderate"
+            logging.info(f"Determined bias: Bearish (score: {bias_score})")
         else:
             bias = "Sideways"
             direction = "neutral"
             icon = "🔁"
-            logging.info("Determined bias: Sideways")
+            strength = "weak"
+            logging.info(f"Determined bias: Sideways (score: {bias_score})")
         
         # Format the response data
         response = {
@@ -93,9 +156,21 @@ def get_market_bias():
             'bias': bias,
             'direction': direction,
             'icon': icon,
+            'strength': strength,  # Added bias strength for frontend display
+            'score': bias_score,   # Added numerical score for transparency
             'prev_price': round(prev_open, 4),  # Using open price from TradingView
             'current_price': round(current_close, 4),
-            'change_percentage': round(change_percentage, 2)
+            'change_percentage': round(change_percentage, 2),
+            'indicators': {  # Added technical indicators for advanced users
+                'rsi': round(rsi, 2) if isinstance(rsi, (int, float)) else rsi,
+                'ema20': round(ema_20, 4) if isinstance(ema_20, (int, float)) else ema_20,
+                'ema50': round(ema_50, 4) if isinstance(ema_50, (int, float)) else ema_50,
+                'macd': round(macd, 4) if isinstance(macd, (int, float)) else macd,
+                'macd_signal': round(signal, 4) if isinstance(signal, (int, float)) else signal,
+                'stoch_k': round(stoch_k, 2) if isinstance(stoch_k, (int, float)) else stoch_k,
+                'stoch_d': round(stoch_d, 2) if isinstance(stoch_d, (int, float)) else stoch_d
+            },
+            'tv_recommendation': tv_recommendation  # TradingView's own recommendation
         }
         
         return jsonify(response)
